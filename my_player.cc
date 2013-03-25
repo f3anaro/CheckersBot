@@ -340,7 +340,10 @@ int main(int argc, char *argv[]) {
     		depth++;
     	}
 
+    	// append terminating new line
+    	bestMove += "\n";
+
 		// send move back to MCP
-		output (buffer);
+		output (bestMove);
     }
 }
