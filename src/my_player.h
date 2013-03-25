@@ -9,11 +9,17 @@
 #define MY_PLAYER_
 
 #include <stdint.h>
+#include <string>
 #include "CBitBoard.h"
 
 const extern int BUFFERSIZE_IN ;
 const extern int BUFFERSIZE_OUT;
 const extern int BUFFERSIZE;
+
+/**
+ * This variable is true if the maximal computation time is exceeded.
+ */
+extern bool timeout;
 
 /**
  * Prints an error message and stops the execution immediately.
@@ -52,15 +58,15 @@ void input (char *buffer);
  * @param char const buffer[]
  * @return void
  */
-void output (char const buffer[]);
+void output (std::string const &move);
 
-int makeJump (uint32_t startField, uint32_t target, Player player, uint32_t depth);
+int makeJump (uint32_t startField, uint32_t target, Player player, uint32_t depth, std::string &bestJump);
 
 /**
  * NegaMax variation of the MiniMax algorithm.
  *
  * @return int
  */
-int miniMax (Player player, CBitBoard &board, int depth, int alpha, int beta);
+int miniMax (Player player, CBitBoard &board, int depth, int alpha, int beta, std::string *bestMove);
 
 #endif /* MY_PLAYER_ */

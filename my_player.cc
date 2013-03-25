@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <iostream>
+#include <sstream>
 #include <stdlib.h>
 #include <vector>
+#include <string>
 #include <string.h>
 #include <stdarg.h>
 #include <unistd.h>
@@ -48,22 +50,26 @@ void input (char *buffer) {
 	*end = 0;
 }
 
-void output (char const buffer[]) {
-    int length = strlen(buffer);
+void output (const string &move) {
+    int length = move.length();
 
     // write to output stream and validate count of written chars
-    if (write (FD_OUT, buffer, length) != length)
+    if (write (FD_OUT, move.c_str(), length) != length)
     	error ("error writing FD_OUT\n");
 }
 
 
 int leafs = 0;
 
-int makeJump (Player player, CBitBoard &board, Jump jump, int depth, int alpha, int beta) {
+int makeJump (Player player, CBitBoard &board, Jump jump, int depth, int alpha, int beta, string &bestJump) {
 
 	char const *playerName = (player == BLACK) ? "BLACK " : "WHITE";
 	cout << "makeJump(" << playerName << ", alpha: " << alpha << ", beta: " << beta <<endl;
 
+	// append target
+	stringstream strStream;
+	strStream << bestJump << 'x' << jump.target+1;
+	bestJump = strStream.str();
 
 	// no crowing jump
 	if (!board.executeJump(jump)) {
@@ -96,18 +102,24 @@ int makeJump (Player player, CBitBoard &board, Jump jump, int depth, int alpha, 
 			// TODO alpha beta pruning?
 			int maxValue = -INFINTY;
 
-			while (!continuingJumps.empty()) {
+			while (!continuingJumps.empty() && !timeout) {
 				cout << "Continuing jump" << endl;
 				// execute continuing jump
 				Jump continueJump = continuingJumps.pop();
-				int value = makeJump(player, board, continueJump, depth, alpha, beta);
 
-				cout << "Jump " << jump.start+1 << "x" << jump.target+1 << " value: " << value << endl;
+				string localCopy(bestJump);
+
+				int value = makeJump(player, board, continueJump, depth, alpha, beta, localCopy);
+
+				cout << "Jump " << localCopy << " value: " << value << endl;
 
 				// store always the best jump
 				if (value > maxValue) {
-					cout << "Better continuing jump: " << maxValue << " < " << value << endl;
 					maxValue = value;
+
+					cout << "Better continuing jump: " << maxValue << " < " << value << endl;
+					cout << "Former best jump: " << bestJump << " -> better jump: " << localCopy << endl;
+					bestJump = localCopy;
 				}
 			}
 			// revert the initial jump and return the maximal value
@@ -125,16 +137,8 @@ int makeJump (Player player, CBitBoard &board, Jump jump, int depth, int alpha, 
 
 	board.draw();
 
-	// quiescence search
-//	if (depth <= 0 && board.getJumpers(player) == 0) {
-//	if (depth == 0) {
-//		// TODO
-//		leafs++;
-//		return board.evaluate(player);
-//	}
-
 	// continue depth first search
-	int value = -miniMax((Player) -player, board, depth-1, -beta, -alpha);
+	int value = -miniMax((Player) -player, board, depth-1, -beta, -alpha, NULL);
 
 	cout << "Make Jump " << jump.start+1 << "x" << jump.target+1 << " end: value: " << value << endl;
 
@@ -143,14 +147,15 @@ int makeJump (Player player, CBitBoard &board, Jump jump, int depth, int alpha, 
 	return value;
 }
 
-int miniMax (Player player, CBitBoard &board, int depth, int alpha, int beta) {
-
+int miniMax (Player player, CBitBoard &board, int depth, int alpha, int beta, string *bestMove) {
 	char const *playerName = (player == BLACK) ? "BLACK " : "WHITE";
 	cout << "miniMax(" << playerName << ", depth: " << depth << ", alpha: " << alpha << ", beta: " << beta << endl;
 
+	// TODO quiescence search
+
 	// depth first search termination condition and quiescence search cancel condition
-//	if (depth <= 0 && board.getJumpers(player) == 0) {
-	if (depth == 0) {
+	if (depth <= 0 && board.getJumpers(player) == 0) {
+//	if (depth == 0 || timeout) {
 		leafs++;
 		int value = board.evaluate(player);
 		cout << "Max. depth reached. Evaluate: " << value << endl;
@@ -179,11 +184,11 @@ int miniMax (Player player, CBitBoard &board, int depth, int alpha, int beta) {
 
 		int maxValue = alpha;
 
-		while (!possibleMoves.empty()) {
+		while (!possibleMoves.empty() && !timeout) {
 			Move move = possibleMoves.pop();
 			board.executeMove(move);
 			board.draw();
-			int value = -miniMax((Player) -player, board, depth-1, -beta, -maxValue);
+			int value = -miniMax((Player) -player, board, depth-1, -beta, -maxValue, NULL);
 			board.revertMove(move);
 
 			cout << "Move " << move.start+1 << '-' << move.target+1 << ". value: " << value << endl;
@@ -197,8 +202,12 @@ int miniMax (Player player, CBitBoard &board, int depth, int alpha, int beta) {
 					break;
 				}
 
-				// TODO den Zug merken
 
+				if (bestMove != NULL) {
+					stringstream strStream;
+					strStream <<  move.start+1 << '-' << move.target+1;
+					*bestMove = strStream.str();
+				}
 			}
 		}
 
@@ -211,9 +220,14 @@ int miniMax (Player player, CBitBoard &board, int depth, int alpha, int beta) {
 	cout << "Jumps available" << endl;
 
 	// execute all possible beneficial jumps
-	while (!possibleMoves.empty()) {
+	while (!possibleMoves.empty() && !timeout) {
 		Jump jump = possibleMoves.pop();
-		int value = makeJump(player, board, jump, depth, alpha, beta);
+
+		stringstream strStream;
+		strStream <<  jump.start+1;
+		string seriaizedJump = strStream.str();
+
+		int value = makeJump(player, board, jump, depth, alpha, beta, seriaizedJump);
 
 		cout << "Jump " << jump.start+1 << "x" << jump.target+1 << " value: " << value << endl;
 
@@ -230,7 +244,10 @@ int miniMax (Player player, CBitBoard &board, int depth, int alpha, int beta) {
 				break;
 			}
 
-			// TODO den Zug merken
+			if (bestMove != NULL) {
+				cout << "Better jump: " << *bestMove << " -> " << seriaizedJump << endl;
+				*bestMove = seriaizedJump;
+			}
 		} else {
 			cout << "Not better than " << maxValue << " >= " << value << endl;
 		}
@@ -241,7 +258,20 @@ int miniMax (Player player, CBitBoard &board, int depth, int alpha, int beta) {
 
 }
 
-void signalHandler (int signum) {
+bool timeout = false;
+
+void signalHandlerSIGXCPU (int signum) {
+	timeout = true;
+
+	timeval signal;
+	gettimeofday(&signal, NULL);
+
+	cout << endl << "-----------------------------------" << endl;
+	cout << "Timeout Signal on " << signal.tv_sec << '.' << signal.tv_usec << endl;
+	cout << "-----------------------------------" << endl << endl;
+}
+
+void signalHandlerSIGINT (int signum) {
 	cout << "Iterrupt signal (" << signum << ") received." << endl;
 	cout << "Current leaf count: " << leafs << endl;
 
@@ -249,90 +279,68 @@ void signalHandler (int signum) {
 }
 
 int main(int argc, char *argv[]) {
-	signal(SIGINT, signalHandler);
 
-	CBitBoard *board = new CBitBoard();
+	// initialize SignalHandler
+	signal(SIGINT,  signalHandlerSIGXCPU);
+	signal(SIGXCPU, signalHandlerSIGXCPU);
+//	signal(SIGINT,  signalHandlerSIGINT);
+
+	CBitBoard board = CBitBoard();
 	char buffer[BUFFERSIZE];
 
-//	board->unserialize("----b-B--W--bb--bw--w-----------");
-	board->draw();
+//	board.unserialize("----b-B--W--bb--bw--w-----------");
+//	board.draw();
+//
+//	cout << "Start search" << endl;
+//
+//	timeval stop, start;
+//
+//	string bestMove;
+//
+//	gettimeofday(&start, NULL);
+//	miniMax(BLACK, board, 12, -INFINTY, INFINTY, &bestMove);
+//	gettimeofday(&stop, NULL);
+//
+//	board.draw();
+//
+//	cout << "Best Move: " << bestMove << endl;
+//	cout << "Leafs: " << leafs << endl;
+//	cout << "Duration: " << stop.tv_sec - start.tv_sec << "." << stop.tv_usec - start.tv_usec <<endl;
+//	cout << "End: " << stop.tv_sec << '.' << stop.tv_usec << endl;
+//
+//	return 0;
 
-//	MoveList moveList;
-//	board->getMoveListWhite(&moveList);
-//
-//	cout << endl << "White Moves:" << endl;
-//
-//	while (!moveList.isEmpty()) {
-//		Move move = moveList.pop();
-//		printf("\t%d-%d\n", move.start + 1, move.target + 1);
-//	}
-//
-//	board->getMoveListBlack(&moveList);
-//	cout << endl << "Black Moves:" << endl;
-//
-//	while (!moveList.isEmpty()) {
-//		Move move = moveList.pop();
-//		printf("\t%d-%d\n", move.start + 1, move.target + 1);
-//	}
-
-//	bitset<32> jumpers(board->getJumpersWhite());
-//	cout << jumpers << endl;
-//
-//	MoveList jumpList;
-//	board->getJumpListWhite(&jumpList);
-//	cout << "White jumps:" << endl;
-//
-//	while (!jumpList.empty()) {
-//		Jump jump = jumpList.pop();
-//		printf("\t%dx%d\n", jump.start + 1, jump.target + 1);
-////		board->executeJump(jump);
-////		board->draw();
-////		board->revertMove(jump);
-////		board->draw();
-//	}
-//
-//	board->getJumpListBlack(&jumpList);
-//	cout << "Black jumps:" << endl;
-//
-//	while (!jumpList.empty()) {
-//		Jump jump = jumpList.pop();
-//		printf("\t%dx%d\n", jump.start + 1, jump.target + 1);
-//	}
-
-	cout << "Start search" << endl;
-
-	timeval stop, start;
-	clock_t startSeconds, stopSeconds;
-
-	startSeconds = clock();
-	gettimeofday(&start, NULL);
-	miniMax(BLACK, *board, 7, -INFINTY, INFINTY);
-	stopSeconds = clock();
-	gettimeofday(&stop, NULL);
-
-	cout << "Leafs: " << leafs << endl;
-	printf("Duration: %d.%lu seconds\n", (int) (stopSeconds - startSeconds), (stop.tv_usec - start.tv_usec));
-
-	return 0;
+	// TODO openings
 
     while (1) {
     	input(buffer);
 
-    	board->unserialize(buffer + 2);
-    	board->draw();
+    	board.unserialize(buffer + 2);
+    	board.draw();
 
-    	printf ("[ %c ] board '%s'\n", buffer[0], buffer + 2);
+    	// define current player
+    	Player player = (buffer[0] == 'B') ? BLACK : WHITE;
+    	int depth = DEPTH_INIT;
 
-		printf ("[ %c ] your move : ", buffer[0]);
+    	string bestMove;
 
+    	int maxValue = -INFINTY;
 
-		// request user input, read move into buffer
-		if (!fgets(buffer, BUFFERSIZE_OUT, stdin))
-			error ("fgets() failed");
+    	while (!timeout) {
+    		cout << "Search with depth: " << depth << endl;
+
+    		string move;
+    		int value = miniMax(player, board, depth, -INFINTY, INFINTY, &move);
+
+    		// storing the best move
+    		if (value > maxValue) {
+    			maxValue = value;
+    			bestMove = move;
+    		}
+    		depth++;
+    	}
 
 		// send move back to MCP
 		output (buffer);
     }
-    // destruct board
-    delete board;
 }
