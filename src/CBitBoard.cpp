@@ -649,11 +649,22 @@ uint32_t CBitBoard::getPossibleKingsWhite (void) {
 	return possibleKings;
 }
 
+static uint32_t count_bits (uint32_t bitmask) {
+	uint32_t count = 0;
+
+	while (bitmask != 0) {
+		count += (bitmask & 1);
+		bitmask >>= 1;
+	}
+
+	return count;
+}
+
 int CBitBoard::evaluate (Player player) {
 	uint32_t playerBitboard, opponentBitboard;
 
-	bitset<32> *playerMen, *playerKings, *playerMovers, *opponentMen, *opponentKings, *opponentMovers;
-	bitset<32> *playerPossibleKings, *opponentPossibleKings;
+	uint32_t playerMen, playerKings, playerMovers, playerPossibleKings;
+	uint32_t opponentMen, opponentKings, opponentMovers, opponentPossibleKings;
 
 	if (player == WHITE) {
 		// white player
@@ -661,12 +672,12 @@ int CBitBoard::evaluate (Player player) {
 		opponentBitboard = blackPieces;
 
 		// get movers and possible kings for white
-		playerMovers = new bitset<32>(getMoversWhite());
-		playerPossibleKings = new bitset<32>(getPossibleKingsWhite());
+		playerMovers = getMoversWhite();
+		playerPossibleKings = getPossibleKingsWhite();
 
 		// get movers and possible kings for black
-		opponentMovers = new bitset<32>(getMoversBlack());
-		opponentPossibleKings = new bitset<32>(getPossibleKingsBlack());
+		opponentMovers = getMoversBlack();
+		opponentPossibleKings = getPossibleKingsBlack();
 
 	} else {
 		// black player
@@ -674,12 +685,12 @@ int CBitBoard::evaluate (Player player) {
 		opponentBitboard = whitePieces;
 
 		// get movers and possible kings for black
-		playerMovers = new bitset<32>(getMoversBlack());
-		playerPossibleKings = new bitset<32>(getPossibleKingsBlack());
+		playerMovers = getMoversBlack();
+		playerPossibleKings = getPossibleKingsBlack();
 
 		// get movers and possible kings for white
-		opponentMovers = new bitset<32>(getMoversWhite());
-		opponentPossibleKings = new bitset<32>(getPossibleKingsWhite());
+		opponentMovers = getMoversWhite();
+		opponentPossibleKings = getPossibleKingsWhite();
 	}
 
 	if (!playerBitboard || playerMovers == 0)
@@ -689,25 +700,15 @@ int CBitBoard::evaluate (Player player) {
 		return INFINTY;
 
 	// create player bitsets
-	playerMen = new bitset<32>(playerBitboard & ~kings);
-	playerKings = new bitset<32>(playerBitboard & kings);
+	playerMen = playerBitboard & ~kings;
+	playerKings = playerBitboard & kings;
 
 	// create opponent bitsets
-	opponentMen = new bitset<32>(opponentBitboard & ~kings);
-	opponentKings = new bitset<32>(opponentBitboard & kings);
+	opponentMen = opponentBitboard & ~kings;
+	opponentKings = opponentBitboard & kings;
 
-	int value = VALUE_KING * playerKings->count()  + VALUE_CANDIDATE * playerPossibleKings->count()   + playerMen->count();
-	value -=  VALUE_KING * opponentKings->count()  + VALUE_CANDIDATE * opponentPossibleKings->count() + opponentMen->count();
-
-	// free allocated memory
-	delete playerMen;
-	delete playerKings;
-	delete playerMovers;
-	delete opponentMen;
-	delete opponentKings;
-	delete opponentMovers;
-	delete playerPossibleKings;
-	delete opponentPossibleKings;
+	int value = VALUE_KING * count_bits(playerKings)  + count_bits(playerPossibleKings)   + count_bits(playerMen);
+	value -=  VALUE_KING * count_bits(opponentKings)  + count_bits(opponentPossibleKings) + count_bits(opponentMen);
 
 	return value;
 }

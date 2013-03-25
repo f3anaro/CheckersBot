@@ -291,6 +291,12 @@ void miniMax_threaded () {
 
 }
 
+void* printMessage (void *) {
+	cout << "Some message "<< endl;
+
+	return NULL;
+}
+
 int main(int argc, char *argv[]) {
 
 	// initialize SignalHandler
@@ -301,14 +307,15 @@ int main(int argc, char *argv[]) {
 	CBitBoard board = CBitBoard();
 	char buffer[BUFFERSIZE];
 
-//	board.unserialize("------w-b-B--W--bb--bw--w-------");
-	board.draw();
-
+//	board.unserialize("------w-b-B--W--bb--bw--wb------");
+//	board.draw();
+//
 //	uint32_t whiteMovers = board.getMoversWhite();
 //	uint32_t blackMovers = board.getMoversBlack();
 //	uint32_t whiteJumpers = board.getJumpersWhite();
 //	uint32_t blackJumpers = board.getJumpersBlack();
 //	uint32_t whiteCandidates = board.getPossibleKingsWhite();
+//	uint32_t blackCandidates = board.getPossibleKingsBlack();
 //
 //	cout << "White Movers: " << endl;
 //	printBits(whiteMovers);
@@ -320,18 +327,46 @@ int main(int argc, char *argv[]) {
 //	printBits(blackJumpers);
 //	cout << "White possible kings: " << endl;
 //	printBits(whiteCandidates);
+//	cout << "White possible black: " << endl;
+//	printBits(blackCandidates);
 //
-//	MoveList whiteJumps;
-//	board.getJumpListWhite(&whiteJumps);
+//	MoveList whiteMoves;
+//	board.getJumpListWhite(&whiteMoves);
 //
-//	while (!whiteJumps.empty()) {
-//		Jump jump = whiteJumps.pop();
+//	while (!whiteMoves.empty()) {
+//		Jump jump = whiteMoves.pop();
 //		board.executeJump(jump);
 //		board.draw();
+//		cout << "Evaluation: " << board.evaluate(WHITE) << endl;
+//		board.revertMove(jump);
+//	}
+//
+//	board.getMoveListWhite(&whiteMoves);
+//	while (!whiteMoves.empty()) {
+//		Jump jump = whiteMoves.pop();
+//		board.executeMove(jump);
+//		board.draw();
+//		cout << "Evaluation: " << board.evaluate(WHITE) << endl;
 //		board.revertMove(jump);
 //	}
 //
 //	return 0;
+
+
+//	string message("Some text");
+//	pthread_t thread_1 = NULL;
+//	void *result;
+//
+//	pthread_t threads[THREAD_COUNT];
+//
+//	pthread_create(&thread_1, NULL, &printMessage, NULL);
+//	pthread_join(thread_1, &result);
+//
+//	cout << "Thread_1 terminated" << endl;
+//
+//	pthread_join(thread_1, &result);
+//	cout << "Thread_1 terminated without starting" << endl;
+
 
 //	cout << "Start search" << endl;
 //
