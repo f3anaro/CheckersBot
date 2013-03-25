@@ -9,22 +9,19 @@
 #define MY_PLAYER_
 
 #include <stdint.h>
-#include "Board.h"
+#include "CBitBoard.h"
 
 const extern int BUFFERSIZE_IN ;
 const extern int BUFFERSIZE_OUT;
 const extern int BUFFERSIZE;
 
-uint32_t MASK_LEFT_SHIFT_3, MASK_LEFT_SHIFT_5, MASK_RIGHT_SHIFT_3, MASK_RIGHT_SHIFT_5;
-uint32_t MASK_BOARD[32];
-
-MASK_BOARD[0] = 1;
-
-for (int i = 1; i < 32; i++) {
-	MASK_BOARD[i] = 2 * MASK_BOARD[i - 1];
-}
-
-static void error (const char * fmt, ...);
+/**
+ * Prints an error message and stops the execution immediately.
+ *
+ * @param const char *fmt
+ * @return void
+ */
+void error (const char *fmt, ...);
 
 /**
  * Reads the board state from the input stream into an string
@@ -38,12 +35,32 @@ static void error (const char * fmt, ...);
 void input (char *buffer);
 
 /**
- * Writes a given string to the output stream
+ * Writes a given string to the output stream. The output
+ * must implement the following encoding:
+ *
+ * Moves from square A to square B:
+ * 		"A-B\n"
+ *
+ * Jumps from square A over B to C:
+ * 		"AxC\n"
+ *
+ * Multiple Jumps:
+ * 		"AxCxE...\n"
+ *
+ * Regular expression for encoding: [0-9][0-9]?([-x][0-9][0-9]?)+
  *
  * @param char const buffer[]
  * @return void
  */
 void output (char const buffer[]);
 
+int makeJump (uint32_t startField, uint32_t target, Player player, uint32_t depth);
+
+/**
+ * NegaMax variation of the MiniMax algorithm.
+ *
+ * @return int
+ */
+int miniMax (Player player, CBitBoard &board, int depth, int alpha, int beta);
 
 #endif /* MY_PLAYER_ */
