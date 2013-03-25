@@ -33,23 +33,23 @@ const uint32_t CBitBoard::BOARD_MASK[] = {
 	1 << 28, 1 << 29, 1 << 30, 1 << 31
 };
 
-const uint32_t CBitBoard::MASK_LEFT_SHIFT_3 = 	BOARD_MASK[1]  | BOARD_MASK[2]  | BOARD_MASK[3]  |
-												BOARD_MASK[9]  | BOARD_MASK[10] | BOARD_MASK[11] |
-												BOARD_MASK[17] | BOARD_MASK[18] | BOARD_MASK[19] |
-												BOARD_MASK[25] | BOARD_MASK[26] | BOARD_MASK[27];
+const uint32_t CBitBoard::MASK_LEFT_SHIFT_3 = 	BOARD_MASK[5]  | BOARD_MASK[6]  | BOARD_MASK[7]  |
+												BOARD_MASK[13] | BOARD_MASK[14] | BOARD_MASK[15] |
+												BOARD_MASK[21] | BOARD_MASK[22] | BOARD_MASK[23];
 
-const uint32_t CBitBoard::MASK_LEFT_SHIFT_5  = 	BOARD_MASK[4]  | BOARD_MASK[5]  | BOARD_MASK[6]  |
-												BOARD_MASK[12] | BOARD_MASK[13] | BOARD_MASK[14] |
-												BOARD_MASK[20] | BOARD_MASK[21] | BOARD_MASK[22];
+const uint32_t CBitBoard::MASK_LEFT_SHIFT_5  = 	BOARD_MASK[0]  | BOARD_MASK[1]  | BOARD_MASK[2]  |
+												BOARD_MASK[8]  | BOARD_MASK[9]  | BOARD_MASK[10] |
+												BOARD_MASK[16] | BOARD_MASK[17] | BOARD_MASK[18] |
+												BOARD_MASK[24] | BOARD_MASK[25] | BOARD_MASK[26];
 
-const uint32_t CBitBoard::MASK_RIGHT_SHIFT_3 = 	BOARD_MASK[4]  | BOARD_MASK[5]  | BOARD_MASK[6]  |
-												BOARD_MASK[12] | BOARD_MASK[13] | BOARD_MASK[14] |
-												BOARD_MASK[20] | BOARD_MASK[21] | BOARD_MASK[22] |
-												BOARD_MASK[28] | BOARD_MASK[29] | BOARD_MASK[30];
+const uint32_t CBitBoard::MASK_RIGHT_SHIFT_3 = 	BOARD_MASK[8]  | BOARD_MASK[9]  | BOARD_MASK[10] |
+												BOARD_MASK[16] | BOARD_MASK[17] | BOARD_MASK[18] |
+												BOARD_MASK[24] | BOARD_MASK[25] | BOARD_MASK[26];
 
-const uint32_t CBitBoard::MASK_RIGHT_SHIFT_5 =	BOARD_MASK[9]  | BOARD_MASK[10] | BOARD_MASK[11] |
-												BOARD_MASK[17] | BOARD_MASK[18] | BOARD_MASK[19] |
-												BOARD_MASK[25] | BOARD_MASK[26] | BOARD_MASK[27];
+const uint32_t CBitBoard::MASK_RIGHT_SHIFT_5 =	BOARD_MASK[5]  | BOARD_MASK[6]  | BOARD_MASK[7]  |
+												BOARD_MASK[13] | BOARD_MASK[14] | BOARD_MASK[15] |
+												BOARD_MASK[21] | BOARD_MASK[22] | BOARD_MASK[23] |
+												BOARD_MASK[29] | BOARD_MASK[30] | BOARD_MASK[31];
 
 const uint32_t CBitBoard::MASK_KINGS_ROW_BLACK = BOARD_MASK[0]  | BOARD_MASK[1]  | BOARD_MASK[2]  | BOARD_MASK[3];
 const uint32_t CBitBoard::MASK_KINGS_ROW_WHITE = BOARD_MASK[28] | BOARD_MASK[29] | BOARD_MASK[30] | BOARD_MASK[31];
@@ -161,7 +161,7 @@ void CBitBoard::draw(void) {
 
 		// even row
 		// r == 0 (mod 2)
-		if ((r & 1) != 0) {
+		if ((r & 1) == 0) {
 			cout << "|    ";
 		}
 
@@ -182,14 +182,13 @@ void CBitBoard::draw(void) {
 
 			printf("|%c%2d%c", c, i+1, c);
 
-			// no end of line or even row
-			if ((i & 7) != 7 || (r & 1) == 0) {
+			// no end of line or odd row
+			if (j != 3 || (r & 1) == 1) {
 				cout << "|    ";
 			}
 
 		}
 
-		// odd row
 		cout << "|\n";
 
 
@@ -526,8 +525,8 @@ bool CBitBoard::executeJump (Jump &jump) {
 	// define masks
 	uint32_t startMask = BOARD_MASK[jump.start];
 
-	// average value of start and target + (if the row is odd 1 | 0 otherwise)
-	uint32_t capturedSquare = ((jump.start + jump.target) >> 1) + ((jump.start >> 2) & 1);
+	// average value of start and target + (if the row is even 1 | 0 otherwise)
+	uint32_t capturedSquare = ((jump.start + jump.target) >> 1) + ( ~(jump.start >> 2) & 1);
 
 	uint32_t captureMask = ~(BOARD_MASK[capturedSquare]);
 	uint32_t targetMask = BOARD_MASK[jump.target];
@@ -636,7 +635,7 @@ uint32_t CBitBoard::getPossibleKingsBlack (void) {
 	uint32_t freeKingSquares = ~(blackPieces | whitePieces) & MASK_KINGS_ROW_WHITE;
 	uint32_t blackMen = (blackPieces & ~kings);
 
-	uint32_t possibleKings = ((freeKingSquares >> 4) | ((freeKingSquares & MASK_RIGHT_SHIFT_3) >> 3)) & blackMen;
+	uint32_t possibleKings = ((freeKingSquares >> 4) | ((freeKingSquares & MASK_RIGHT_SHIFT_5) >> 5)) & blackMen;
 
 	return possibleKings;
 }
@@ -645,7 +644,7 @@ uint32_t CBitBoard::getPossibleKingsWhite (void) {
 	uint32_t freeKingSquares = ~(blackPieces | whitePieces) & MASK_KINGS_ROW_BLACK;
 	uint32_t whiteMen = (whitePieces & ~kings);
 
-	uint32_t possibleKings = ((freeKingSquares << 4) | ((freeKingSquares & MASK_LEFT_SHIFT_3) << 3)) & whiteMen;
+	uint32_t possibleKings = ((freeKingSquares << 4) | ((freeKingSquares & MASK_LEFT_SHIFT_5) << 5)) & whiteMen;
 
 	return possibleKings;
 }
@@ -697,8 +696,8 @@ int CBitBoard::evaluate (Player player) {
 	opponentMen = new bitset<32>(opponentBitboard & ~kings);
 	opponentKings = new bitset<32>(opponentBitboard & kings);
 
-	int value = 4 * playerKings->count()  + 2 * playerPossibleKings->count()   + playerMen->count();
-	value -=  4 * opponentKings->count()  + 2 * opponentPossibleKings->count() + opponentMen->count();
+	int value = VALUE_KING * playerKings->count()  + VALUE_CANDIDATE * playerPossibleKings->count()   + playerMen->count();
+	value -=  VALUE_KING * opponentKings->count()  + VALUE_CANDIDATE * opponentPossibleKings->count() + opponentMen->count();
 
 	// free allocated memory
 	delete playerMen;

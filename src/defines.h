@@ -12,4 +12,7 @@
 #define DEPTH_INIT 4
 #define THREAD_COUNT 4
 
+#define VALUE_KING 3
+#define VALUE_CANDIDATE 2
+
 #endif /* DEFINES_H_ */

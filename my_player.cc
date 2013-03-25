@@ -147,15 +147,15 @@ int makeJump (Player player, CBitBoard &board, Jump jump, int depth, int alpha, 
 	return value;
 }
 
-int miniMax (Player player, CBitBoard &board, int depth, int alpha, int beta, string *bestMove) {
+int miniMax (Player player, CBitBoard &board, int depth, int alpha, int beta,  std::string *bestMove) {
 	char const *playerName = (player == BLACK) ? "BLACK " : "WHITE";
 	cout << "miniMax(" << playerName << ", depth: " << depth << ", alpha: " << alpha << ", beta: " << beta << endl;
 
 	// TODO quiescence search
 
 	// depth first search termination condition and quiescence search cancel condition
-	if (depth <= 0 && board.getJumpers(player) == 0) {
-//	if (depth == 0 || timeout) {
+//	if ((depth <= 0 && board.getJumpers(player) == 0) || timeout) {
+	if (depth == 0 || timeout) {
 		leafs++;
 		int value = board.evaluate(player);
 		cout << "Max. depth reached. Evaluate: " << value << endl;
@@ -197,10 +197,10 @@ int miniMax (Player player, CBitBoard &board, int depth, int alpha, int beta, st
 				cout << "Better than current max. value: " << maxValue << ". Replace it" << endl;
 				maxValue = value;
 
-				if (maxValue >= beta) {
-					cout << "Opponent has a beneficial offensive:" << beta << " >= " << maxValue <<". Cutoff " << possibleMoves.size() << " moves" << endl;
-					break;
-				}
+//				if (maxValue >= beta) {
+//					cout << "Opponent has a beneficial offensive:" << beta << " >= " << maxValue <<". Cutoff " << possibleMoves.size() << " moves" << endl;
+//					break;
+//				}
 
 
 				if (bestMove != NULL) {
@@ -238,11 +238,11 @@ int miniMax (Player player, CBitBoard &board, int depth, int alpha, int beta, st
 			cout << "Better jump for " << playerName << " found. " << jump.start+1 << 'x' << jump.target+1 << ": " << value << " > " <<maxValue << endl;
 			maxValue = value;
 
-			// opponent has a beneficial offensive
-			if (maxValue >= beta) {
-				cout << "Opponent has a beneficial offensive:" << beta << " >= " << maxValue <<". Cutoff " << possibleMoves.size() << " jumps" << endl;
-				break;
-			}
+//			// opponent has a beneficial offensive
+//			if (maxValue >= beta) {
+//				cout << "Opponent has a beneficial offensive:" << beta << " >= " << maxValue <<". Cutoff " << possibleMoves.size() << " jumps" << endl;
+//				break;
+//			}
 
 			if (bestMove != NULL) {
 				cout << "Better jump: " << *bestMove << " -> " << seriaizedJump << endl;
@@ -278,6 +278,19 @@ void signalHandlerSIGINT (int signum) {
 	exit(signum);
 }
 
+void printBits (uint32_t bits) {
+	for (int i = 1; i < 33; ++i) {
+		if (bits & 1) {
+			cout << "\t" << i << endl;
+		}
+		bits >>= 1;
+	}
+}
+
+void miniMax_threaded () {
+
+}
+
 int main(int argc, char *argv[]) {
 
 	// initialize SignalHandler
@@ -288,9 +301,38 @@ int main(int argc, char *argv[]) {
 	CBitBoard board = CBitBoard();
 	char buffer[BUFFERSIZE];
 
-//	board.unserialize("----b-B--W--bb--bw--w-----------");
-//	board.draw();
+//	board.unserialize("------w-b-B--W--bb--bw--w-------");
+	board.draw();
+
+//	uint32_t whiteMovers = board.getMoversWhite();
+//	uint32_t blackMovers = board.getMoversBlack();
+//	uint32_t whiteJumpers = board.getJumpersWhite();
+//	uint32_t blackJumpers = board.getJumpersBlack();
+//	uint32_t whiteCandidates = board.getPossibleKingsWhite();
 //
+//	cout << "White Movers: " << endl;
+//	printBits(whiteMovers);
+//	cout << "Black Movers: " << endl;
+//	printBits(blackMovers);
+//	cout << "White Jumpers: " << endl;
+//	printBits(whiteJumpers);
+//	cout << "Black Jumpers: " << endl;
+//	printBits(blackJumpers);
+//	cout << "White possible kings: " << endl;
+//	printBits(whiteCandidates);
+//
+//	MoveList whiteJumps;
+//	board.getJumpListWhite(&whiteJumps);
+//
+//	while (!whiteJumps.empty()) {
+//		Jump jump = whiteJumps.pop();
+//		board.executeJump(jump);
+//		board.draw();
+//		board.revertMove(jump);
+//	}
+//
+//	return 0;
+
 //	cout << "Start search" << endl;
 //
 //	timeval stop, start;
@@ -298,7 +340,7 @@ int main(int argc, char *argv[]) {
 //	string bestMove;
 //
 //	gettimeofday(&start, NULL);
-//	miniMax(BLACK, board, 12, -INFINTY, INFINTY, &bestMove);
+//	miniMax(BLACK, board, 6, -INFINTY, INFINTY, &bestMove);
 //	gettimeofday(&stop, NULL);
 //
 //	board.draw();
