@@ -30,8 +30,12 @@ r run : mcp example_player my_player
 f fight : mcp my_player
 	./mcp -t 60 -T 61 -m 1024 -M 1024 my_player my_player
 
+my_player: my_player.o src/CBitBoard.o
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
 cl clean :
 	rm -f $(TARGETS) *.o
+	rm -f src/CBitBoard.o
 
 mcp : mcp.o logic.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
