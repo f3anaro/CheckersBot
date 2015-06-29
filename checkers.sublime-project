@@ -2,7 +2,9 @@
 	"folders":
 	[
 		{
-			"path": "."
+			"name": "Checkers Bot",
+			"path": ".",
+			"file_exclude_patterns": ["*.o"]
 		}
 	]
 }
