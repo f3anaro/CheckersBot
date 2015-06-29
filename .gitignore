@@ -1,2 +1,6 @@
-/.cproject
-/.project
+# Eclipse
+.cproject
+.project
+
+# Sublime Text
+*.sublime-workspace
