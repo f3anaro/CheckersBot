@@ -10,7 +10,8 @@
 
 #include <stdint.h>
 #include <string>
-#include "CBitBoard.h"
+ 
+#include "CBitBoard.hpp"
 
 const extern int BUFFERSIZE_IN ;
 const extern int BUFFERSIZE_OUT;

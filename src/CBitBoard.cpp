@@ -11,9 +11,10 @@
 #include <vector>
 #include <iostream>
 #include <stdlib.h>
-#include "CBitBoard.h"
-#include "my_player.h"
-#include "defines.h"
+ 
+#include "CBitBoard.hpp"
+#include "player.hpp"
+#include "defines.hpp"
 
 using namespace std;
 

@@ -4,7 +4,7 @@ CXXFLAGS = -g -Wall -std=c++0x -Os -pthread
 #-std=c++98
 #-std=c++0x
 
-TARGETS = mcp example_player my_player
+TARGETS = mcp example_player lucas-kahlert
 
 .PHONY: all help demo run clean dist
 
@@ -24,18 +24,18 @@ h help : mcp
 d demo : mcp example_player
 	./mcp -d example_player example_player
 
-r run : mcp example_player my_player
-	./mcp -d -r0 -R0 -s10 -S11 example_player my_player
+r run : mcp example_player lucas-kahlert
+	./mcp -d -r0 -R0 -s10 -S11 example_player lucas-kahlert
 
-f fight : mcp my_player
-	./mcp -t 60 -T 61 -m 1024 -M 1024 my_player my_player
+f fight : mcp lucas-kahlert
+	./mcp -t 60 -T 61 -m 1024 -M 1024 lucas-kahlert lucas-kahlert
 
-my_player: my_player.o src/CBitBoard.o
+lucas-kahlert: src/player.o src/CBitBoard.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 cl clean :
 	rm -f $(TARGETS) *.o
-	rm -f src/CBitBoard.o
+	rm -f src/*.o
 
 mcp : mcp.o logic.o
 	$(CXX) $(CXXFLAGS) -o $@ $^

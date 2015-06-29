@@ -12,8 +12,8 @@
 #include <signal.h>
 #include <sys/time.h>
 
-#include "src/my_player.h"
-#include "src/defines.h"
+#include "player.hpp"
+#include "defines.hpp"
 
 using namespace std;
 
